@@ -40,6 +40,10 @@ func (c *Client) WhoAmI() error {
 	return c.sendMessageWithType("identity", "", "\n")
 }
 
+func (c *Client) List() error {
+	return c.sendMessageWithType("list", "", "\n")
+}
+
 func (c *Client) sendMessageWithType(messageType string, destinationID string, msg string) error {
 	_, err := c.conn.Write([]byte(fmt.Sprintf("%s|%s|%s", messageType, destinationID, msg)))
 	return err

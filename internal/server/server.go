@@ -95,7 +95,14 @@ func (s *Server) HandleMessages() {
 			_, err = s.connections[sourceID].Write([]byte(outputMsg))
 			break
 		case "list":
-
+			keys := []string{}
+			for k := range s.connections {
+				if k != sourceID {
+					keys = append(keys, strconv.Itoa(k))
+				}
+			}
+			outputMsg := strings.Join(keys, ",")
+			_, err = s.connections[sourceID].Write([]byte(outputMsg))
 			break
 		case "relay":
 			destinationIDs := strings.Split(r[1], ",")

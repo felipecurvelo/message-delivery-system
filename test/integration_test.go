@@ -45,6 +45,47 @@ func TestIntegrationIdentity(t *testing.T) {
 	assert.Equal(t, "2", client2ID)
 }
 
+func TestIntegrationList(t *testing.T) {
+	s := server.NewServer()
+	s.Start("1234")
+	defer s.Close()
+
+	client1 := client.NewClient()
+	err := client1.Connect("127.0.0.1:1234")
+	assert.NoError(t, err)
+	defer client1.Close()
+
+	client2 := client.NewClient()
+	err = client2.Connect("127.0.0.1:1234")
+	assert.NoError(t, err)
+	defer client2.Close()
+
+	client3 := client.NewClient()
+	err = client3.Connect("127.0.0.1:1234")
+	assert.NoError(t, err)
+	defer client3.Close()
+
+	time.Sleep(500 * time.Millisecond)
+
+	client1OutChan := make(chan string)
+	go client1.HandleMessages(client1OutChan)
+
+	client2OutChan := make(chan string)
+	go client2.HandleMessages(client2OutChan)
+
+	err = client1.List()
+	assert.NoError(t, err)
+
+	err = client2.List()
+	assert.NoError(t, err)
+
+	client1ID := <-client1OutChan
+	assert.Equal(t, "2,3", client1ID)
+
+	client2ID := <-client2OutChan
+	assert.Equal(t, "1,3", client2ID)
+}
+
 func TestIntegrationSingleDestination(t *testing.T) {
 	s := server.NewServer()
 	s.Start("1234")

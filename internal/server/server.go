@@ -88,23 +88,35 @@ func (s *Server) HandleMessages() {
 		}
 
 		r := strings.Split(request, "|")
-		destinationIDs := strings.Split(r[0], ",")
-		for _, id := range destinationIDs {
-			destinationID, err := strconv.Atoi(id)
-			if err != nil {
-				fmt.Print("Invalid client id")
+
+		switch r[0] {
+		case "identity":
+			outputMsg := strconv.Itoa(sourceID)
+			_, err = s.connections[sourceID].Write([]byte(outputMsg))
+			break
+		case "list":
+
+			break
+		case "relay":
+			destinationIDs := strings.Split(r[1], ",")
+			for _, id := range destinationIDs {
+				destinationID, err := strconv.Atoi(id)
+				if err != nil {
+					fmt.Print("Invalid client id")
+				}
+
+				outputMsg := fmt.Sprintf("from:%v to:%v msg:%s", sourceID, destinationID, string(r[2]))
+
+				fmt.Println("WRITING TO ", destinationID)
+
+				_, err = s.connections[destinationID].Write([]byte(outputMsg))
+				if err != nil {
+					fmt.Print("ERROR", err)
+				}
+				fmt.Println(">>> ", outputMsg)
+				fmt.Println("WROTE TO ", destinationID)
 			}
-
-			outputMsg := fmt.Sprintf("from:%v to:%v msg:%s", sourceID, destinationID, string(r[1]))
-
-			fmt.Println("WRITING TO ", destinationID)
-
-			_, err = s.connections[destinationID].Write([]byte(outputMsg))
-			if err != nil {
-				fmt.Print("ERROR", err)
-			}
-			fmt.Println(">>> ", outputMsg)
-			fmt.Println("WROTE TO ", destinationID)
+			break
 		}
 	}
 }

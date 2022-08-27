@@ -33,8 +33,15 @@ func (s *Client) Close() {
 }
 
 func (c *Client) SendMessage(destinationID string, msg string) error {
-	_, err := c.conn.Write([]byte(fmt.Sprintf("%s|%s", destinationID, msg)))
-	fmt.Print("Message sent to ", destinationID)
+	return c.sendMessageWithType("relay", destinationID, msg)
+}
+
+func (c *Client) WhoAmI() error {
+	return c.sendMessageWithType("identity", "", "\n")
+}
+
+func (c *Client) sendMessageWithType(messageType string, destinationID string, msg string) error {
+	_, err := c.conn.Write([]byte(fmt.Sprintf("%s|%s|%s", messageType, destinationID, msg)))
 	return err
 }
 

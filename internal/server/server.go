@@ -3,6 +3,7 @@ package server
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"strconv"
 	"strings"
@@ -71,27 +72,39 @@ func (s *Server) WaitForNewConnections() {
 }
 
 func (s *Server) HandleMessages() {
-	for connID := range s.connections {
-		s.connections[connID].SetReadDeadline(time.Now().Add(time.Millisecond * 200))
-		request, err := bufio.NewReader(s.connections[connID]).ReadString('\n')
+	for sourceID := range s.connections {
+		s.connections[sourceID].SetReadDeadline(time.Now().Add(time.Millisecond * 200))
+		request, err := bufio.NewReader(s.connections[sourceID]).ReadString('\n')
 		if err != nil {
 			if opError, isOpError := err.(*net.OpError); isOpError && opError.Timeout() {
 				continue
 			}
-			fmt.Println(err)
+			if err == io.EOF {
+				delete(s.connections, sourceID)
+				continue
+			}
+			fmt.Print("ERROR", err)
 			return
 		}
 
 		r := strings.Split(request, "|")
-		clientID, err := strconv.Atoi(r[0])
-		if err != nil {
-			fmt.Print("Invalid client id")
+		destinationIDs := strings.Split(r[0], ",")
+		for _, id := range destinationIDs {
+			destinationID, err := strconv.Atoi(id)
+			if err != nil {
+				fmt.Print("Invalid client id")
+			}
+
+			outputMsg := fmt.Sprintf("from:%v to:%v msg:%s", sourceID, destinationID, string(r[1]))
+
+			fmt.Println("WRITING TO ", destinationID)
+
+			_, err = s.connections[destinationID].Write([]byte(outputMsg))
+			if err != nil {
+				fmt.Print("ERROR", err)
+			}
+			fmt.Println(">>> ", outputMsg)
+			fmt.Println("WROTE TO ", destinationID)
 		}
-
-		outputMsg := fmt.Sprintf("from:%v to:%v msg:%s", connID, clientID, string(r[1]))
-
-		fmt.Print(">>> ", outputMsg)
-
-		s.connections[clientID].Write([]byte(outputMsg))
 	}
 }

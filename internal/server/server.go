@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -101,6 +102,7 @@ func (s *Server) HandleMessages() {
 					keys = append(keys, strconv.Itoa(k))
 				}
 			}
+			sort.Strings(keys)
 			outputMsg := strings.Join(keys, ",")
 			_, err = s.connections[sourceID].Write([]byte(outputMsg))
 			break

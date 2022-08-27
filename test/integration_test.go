@@ -108,30 +108,30 @@ func TestIntegrationSingleDestination(t *testing.T) {
 	go client2.HandleMessages(client2OutChan)
 
 	//Send a first msg
-	err = client1.SendMessage("2", "firstMsgToClient2\n")
+	err = client1.SendMessage("2", []byte("firstMsgToClient2"))
 	assert.NoError(t, err)
 
-	err = client2.SendMessage("1", "firstMsgToClient1\n")
+	err = client2.SendMessage("1", []byte("firstMsgToClient1"))
 	assert.NoError(t, err)
 
 	firstMsgToClient2 := <-client2OutChan
-	assert.Equal(t, "from:1 to:2 msg:firstMsgToClient2\n", firstMsgToClient2)
+	assert.Equal(t, "from:1 to:2 msg:firstMsgToClient2", firstMsgToClient2)
 
 	firstMsgToClient1 := <-client1OutChan
-	assert.Equal(t, "from:2 to:1 msg:firstMsgToClient1\n", firstMsgToClient1)
+	assert.Equal(t, "from:2 to:1 msg:firstMsgToClient1", firstMsgToClient1)
 
 	// Send a second msg
-	err = client1.SendMessage("2", "secondMsgToClient2\n")
+	err = client1.SendMessage("2", []byte("secondMsgToClient2"))
 	assert.NoError(t, err)
 
-	err = client2.SendMessage("1", "secondMsgToClient1\n")
+	err = client2.SendMessage("1", []byte("secondMsgToClient1"))
 	assert.NoError(t, err)
 
 	secondMsgToClient2 := <-client2OutChan
-	assert.Equal(t, "from:1 to:2 msg:secondMsgToClient2\n", secondMsgToClient2)
+	assert.Equal(t, "from:1 to:2 msg:secondMsgToClient2", secondMsgToClient2)
 
 	secondMsgToClient1 := <-client1OutChan
-	assert.Equal(t, "from:2 to:1 msg:secondMsgToClient1\n", secondMsgToClient1)
+	assert.Equal(t, "from:2 to:1 msg:secondMsgToClient1", secondMsgToClient1)
 }
 
 func TestIntegrationMultipleDestination(t *testing.T) {
@@ -164,12 +164,12 @@ func TestIntegrationMultipleDestination(t *testing.T) {
 	go client3.HandleMessages(client3OutChan)
 
 	//Send a first msg
-	err = client1.SendMessage("2,3", "msg\n")
+	err = client1.SendMessage("2,3", []byte("msg"))
 	assert.NoError(t, err)
 
 	msgToClient2 := <-client2OutChan
-	assert.Equal(t, "from:1 to:2 msg:msg\n", msgToClient2)
+	assert.Equal(t, "from:1 to:2 msg:msg", msgToClient2)
 
 	msgToClient3 := <-client3OutChan
-	assert.Equal(t, "from:1 to:3 msg:msg\n", msgToClient3)
+	assert.Equal(t, "from:1 to:3 msg:msg", msgToClient3)
 }

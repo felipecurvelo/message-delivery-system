@@ -19,6 +19,11 @@ func NewClient() *Client {
 }
 
 func (c *Client) Connect(server string) error {
+	r := strings.Split(server, ":")
+	if len(r) < 2 {
+		return errors.New("Please provide server:port")
+	}
+
 	conn, err := net.Dial("tcp", server)
 	if err != nil {
 		fmt.Println(err)
@@ -68,10 +73,11 @@ func (c *Client) sendMessageWithType(messageType string, destinationID string, m
 	return err
 }
 
-func (c *Client) HandleMessages(clientOutputChan chan<- string) {
+func (c *Client) HandleMessages(clientOutputChan chan<- string) error {
 	for {
 		c.conn.SetReadDeadline(time.Now().Add(time.Millisecond * 200))
 		message, _ := c.reader.ReadString('\n')
+
 		if message != "" {
 			clientOutputChan <- strings.Trim(message, "\n")
 		}

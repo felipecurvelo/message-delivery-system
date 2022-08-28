@@ -8,6 +8,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestClient_WhenServeIsMalformed_ShouldReturnError(t *testing.T) {
+	client := NewClient()
+	err := client.Connect("malformedServerAddress")
+	assert.Error(t, err)
+	assert.Equal(t, "Please provide server:port", err.Error())
+}
+
 func TestClient_WhenMessageIsEmpty_ShouldReturnError(t *testing.T) {
 	client := NewClient()
 	err := client.SendMessage("1", []byte(""))

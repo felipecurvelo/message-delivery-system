@@ -2,7 +2,6 @@ package test
 
 import (
 	"testing"
-	"time"
 
 	"github.com/felipecurvelo/message-delivery-system/internal/client"
 	"github.com/felipecurvelo/message-delivery-system/internal/server"
@@ -23,8 +22,6 @@ func TestIntegrationIdentity(t *testing.T) {
 	err = client2.Connect("127.0.0.1:1234")
 	assert.NoError(t, err)
 	defer client2.Close()
-
-	time.Sleep(500 * time.Millisecond)
 
 	client1OutChan := make(chan string)
 	go client1.HandleMessages(client1OutChan)
@@ -64,8 +61,6 @@ func TestIntegrationList(t *testing.T) {
 	err = client3.Connect("127.0.0.1:1234")
 	assert.NoError(t, err)
 	defer client3.Close()
-
-	time.Sleep(500 * time.Millisecond)
 
 	client1OutChan := make(chan string)
 	go client1.HandleMessages(client1OutChan)

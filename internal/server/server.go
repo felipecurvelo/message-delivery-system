@@ -17,6 +17,7 @@ type Server struct {
 }
 
 const maxClientID = 99
+const waitTimeDuration = time.Millisecond * 200
 
 func NewServer() *Server {
 	return &Server{
@@ -24,8 +25,11 @@ func NewServer() *Server {
 	}
 }
 
-func (s *Server) Start(port string) {
-	s.connect(port)
+func (s *Server) Start(port string) error {
+	err := s.connect(port)
+	if err != nil {
+		return err
+	}
 
 	fmt.Println("Server started...")
 
@@ -34,17 +38,24 @@ func (s *Server) Start(port string) {
 	go func() {
 		for {
 			s.HandleMessages()
+			s.Wait(waitTimeDuration)
 		}
 	}()
+	return nil
 }
 
-func (s *Server) connect(port string) {
+func (s *Server) connect(port string) error {
 	l, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return err
 	}
 	s.listener = l
+	return nil
+}
+
+func (s *Server) Wait(duration time.Duration) {
+	time.Sleep(duration)
 }
 
 func (s *Server) Close() {
@@ -116,14 +127,11 @@ func (s *Server) HandleMessages() {
 
 				outputMsg := fmt.Sprintf("from:%v to:%v msg:%s", sourceID, destinationID, string(r[2]))
 
-				fmt.Println("WRITING TO ", destinationID)
-
 				_, err = s.connections[destinationID].Write([]byte(outputMsg))
 				if err != nil {
-					fmt.Print("ERROR", err)
+					fmt.Println("ERROR", err)
 				}
 				fmt.Println(">>> ", outputMsg)
-				fmt.Println("WROTE TO ", destinationID)
 			}
 			break
 		}

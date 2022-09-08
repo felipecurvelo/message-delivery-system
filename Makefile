@@ -12,6 +12,6 @@ test-unit:
 
 test-integration:
 	go clean -testcache
-	go test test/integration_test.go
+	go test --race test/integration_test.go
 
 test: test-unit test-integration

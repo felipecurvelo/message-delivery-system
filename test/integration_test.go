@@ -1,6 +1,7 @@
 package test
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/felipecurvelo/message-delivery-system/internal/client"
@@ -9,7 +10,7 @@ import (
 )
 
 func TestIntegrationIdentity(t *testing.T) {
-	s := server.NewServer()
+	s := server.NewServer(&sync.Mutex{})
 	s.Start("1234")
 	defer s.Close()
 
@@ -43,7 +44,7 @@ func TestIntegrationIdentity(t *testing.T) {
 }
 
 func TestIntegrationList(t *testing.T) {
-	s := server.NewServer()
+	s := server.NewServer(&sync.Mutex{})
 	s.Start("1234")
 	defer s.Close()
 
@@ -82,7 +83,7 @@ func TestIntegrationList(t *testing.T) {
 }
 
 func TestIntegrationSingleDestination(t *testing.T) {
-	s := server.NewServer()
+	s := server.NewServer(&sync.Mutex{})
 	s.Start("1234")
 	defer s.Close()
 
@@ -130,7 +131,7 @@ func TestIntegrationSingleDestination(t *testing.T) {
 }
 
 func TestIntegrationMultipleDestination(t *testing.T) {
-	s := server.NewServer()
+	s := server.NewServer(&sync.Mutex{})
 	s.Start("1234")
 	defer s.Close()
 
@@ -167,4 +168,64 @@ func TestIntegrationMultipleDestination(t *testing.T) {
 
 	msgToClient3 := <-client3OutChan
 	assert.Equal(t, "from:1 to:3 msg:msg", msgToClient3)
+}
+
+func TestIntegrationMultipleDestinationRaceCondition(t *testing.T) {
+	s := server.NewServer(&sync.Mutex{})
+	s.Start("1234")
+	defer s.Close()
+
+	client1 := client.NewClient()
+	err := client1.Connect("127.0.0.1:1234")
+	assert.NoError(t, err)
+	defer client1.Close()
+
+	client2 := client.NewClient()
+	err = client2.Connect("127.0.0.1:1234")
+	assert.NoError(t, err)
+	defer client2.Close()
+
+	client3 := client.NewClient()
+	err = client3.Connect("127.0.0.1:1234")
+	assert.NoError(t, err)
+	defer client3.Close()
+
+	client1OutChan := make(chan string)
+	go client1.HandleMessages(client1OutChan)
+
+	client2OutChan := make(chan string)
+	go client2.HandleMessages(client2OutChan)
+
+	client3OutChan := make(chan string)
+	go client3.HandleMessages(client3OutChan)
+
+	//Send a first msg
+	err = client1.SendMessage("2,3", []byte("msg"))
+	assert.NoError(t, err)
+
+	msgToClient2 := <-client2OutChan
+	assert.Equal(t, "from:1 to:2 msg:msg", msgToClient2)
+
+	msgToClient3 := <-client3OutChan
+	assert.Equal(t, "from:1 to:3 msg:msg", msgToClient3)
+
+	//Send a second msg
+	err = client1.SendMessage("2,3", []byte("msg"))
+	assert.NoError(t, err)
+
+	secondMsgToClient2 := <-client2OutChan
+	assert.Equal(t, "from:1 to:2 msg:msg", secondMsgToClient2)
+
+	secondMsgToClient3 := <-client3OutChan
+	assert.Equal(t, "from:1 to:3 msg:msg", secondMsgToClient3)
+
+	//Send a third msg
+	err = client2.SendMessage("1,3", []byte("msg"))
+	assert.NoError(t, err)
+
+	thirdMsgToClient1 := <-client1OutChan
+	assert.Equal(t, "from:2 to:1 msg:msg", thirdMsgToClient1)
+
+	thirdMsgToClient3 := <-client3OutChan
+	assert.Equal(t, "from:2 to:3 msg:msg", thirdMsgToClient3)
 }

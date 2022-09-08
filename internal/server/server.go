@@ -8,10 +8,12 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
 type Server struct {
+	m           *sync.Mutex
 	listener    net.Listener
 	connections map[int]net.Conn
 }
@@ -19,9 +21,10 @@ type Server struct {
 const maxClientID = 99
 const waitTimeDuration = time.Millisecond * 200
 
-func NewServer() *Server {
+func NewServer(m *sync.Mutex) *Server {
 	return &Server{
 		connections: map[int]net.Conn{},
+		m:           m,
 	}
 }
 
@@ -78,12 +81,16 @@ func (s *Server) WaitForNewConnections() {
 			clientID++
 		}
 
+		s.m.Lock()
 		s.connections[clientID] = conn
+		s.m.Unlock()
 		fmt.Println("Client connected! Total clients connected: ", len(s.connections))
 	}
 }
 
 func (s *Server) HandleMessages() {
+	s.m.Lock()
+	defer s.m.Unlock()
 	for sourceID := range s.connections {
 		s.connections[sourceID].SetReadDeadline(time.Now().Add(time.Millisecond * 200))
 		request, err := bufio.NewReader(s.connections[sourceID]).ReadString('\n')

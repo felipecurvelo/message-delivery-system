@@ -12,6 +12,7 @@ import (
 type Client struct {
 	conn   net.Conn
 	reader *bufio.Reader
+	Id     string
 }
 
 func NewClient() *Client {
@@ -77,6 +78,12 @@ func (c *Client) HandleMessages(clientOutputChan chan<- string) error {
 	for {
 		c.conn.SetReadDeadline(time.Now().Add(time.Millisecond * 200))
 		message, _ := c.reader.ReadString('\n')
+
+		if strings.HasPrefix(message, "whoami:") {
+			s := strings.Split(message, ":")
+			c.Id = s[1]
+			continue
+		}
 
 		if message != "" {
 			clientOutputChan <- strings.Trim(message, "\n")

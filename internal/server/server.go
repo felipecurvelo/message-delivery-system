@@ -110,7 +110,7 @@ func (s *Server) HandleMessages() {
 
 		switch r[0] {
 		case "identity":
-			outputMsg := strconv.Itoa(sourceID)
+			outputMsg := fmt.Sprintf("whoami:%s", strconv.Itoa(sourceID))
 			_, err = s.connections[sourceID].Write([]byte(outputMsg))
 			break
 		case "list":

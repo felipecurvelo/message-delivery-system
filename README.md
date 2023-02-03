@@ -3,6 +3,18 @@
 This is a simplified message delivery system built in Go that runs over a command line terminal (Tested with bash/zsh). 
 The main goal of this project was to exercise network comunication using Go.
 
+## Building the solution
+
+```
+make build
+```
+
+## Testing the solution
+
+```
+make test
+```
+
 ## Starting a server
 Run the binary passing the port as argument:
 

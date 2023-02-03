@@ -11,10 +11,10 @@ import (
 )
 
 func main() {
-	svr := "127.0.0.1:1234"
+	svr := os.Args[1:]
 
 	c := client.NewClient()
-	err := c.Connect(svr)
+	err := c.Connect(fmt.Sprintf("%s:%s", svr[0], svr[1]))
 	if err != nil {
 		panic(err)
 	}

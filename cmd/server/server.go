@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"sync"
 	"time"
 
@@ -8,10 +9,10 @@ import (
 )
 
 func main() {
-	port := "1234"
+	port := os.Args[1:]
 
 	s := server.NewServer(&sync.Mutex{})
-	s.Start(port)
+	s.Start(port[0])
 
 	defer s.Close()
 

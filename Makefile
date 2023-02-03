@@ -15,3 +15,9 @@ test-integration:
 	go test --race test/integration_test.go
 
 test: test-unit test-integration
+
+start-server: build-server
+	go run ./cmd/server 1234
+
+start-client: build-client
+	go run ./cmd/client 127.0.0.1 1234

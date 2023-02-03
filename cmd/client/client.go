@@ -50,7 +50,7 @@ func main() {
 				c.Send(spl[0], []byte(spl[1]))
 			}
 
-			fmt.Printf("%v@%s> ", c.Id, svr)
+			fmt.Printf("%v@%s:%s> ", c.Id, svr[0], svr[1])
 
 			time.Sleep(time.Millisecond * 300)
 		}
@@ -61,7 +61,7 @@ func main() {
 			continue
 		}
 
-		fmt.Printf("%v@%s> ", c.Id, svr)
+		fmt.Printf("%v@%s:%s> ", c.Id, svr[0], svr[1])
 		msg := <-clientOutputChan
 		fmt.Println(msg)
 

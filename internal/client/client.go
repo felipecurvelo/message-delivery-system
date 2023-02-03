@@ -40,8 +40,8 @@ func (s *Client) Close() {
 	s.conn.Close()
 }
 
-func (c *Client) SendMessage(destinationIDs string, msg []byte) error {
-	if len(destinationIDs) == 0 {
+func (c *Client) Send(destination string, msg []byte) error {
+	if len(destination) == 0 {
 		return errors.New("Destination is empty")
 	}
 
@@ -49,7 +49,7 @@ func (c *Client) SendMessage(destinationIDs string, msg []byte) error {
 		return errors.New("Message is empty")
 	}
 
-	if len(destinationIDs) > 255 {
+	if len(destination) > 255 {
 		return errors.New("Max destination per message reached")
 	}
 
@@ -57,36 +57,35 @@ func (c *Client) SendMessage(destinationIDs string, msg []byte) error {
 		return errors.New("Message size should be less than 1024Kb")
 	}
 
-	return c.sendMessageWithType("relay", destinationIDs, msg)
+	return c.sendWithType("send", destination, msg)
 }
 
 func (c *Client) WhoAmI() error {
-	return c.sendMessageWithType("identity", "", []byte(""))
+	return c.sendWithType("whoami", "", []byte(""))
 }
 
 func (c *Client) List() error {
-	return c.sendMessageWithType("list", "", []byte(""))
+	return c.sendWithType("list", "", []byte(""))
 }
 
-func (c *Client) sendMessageWithType(messageType string, destinationID string, msg []byte) error {
-	inputMsg := append(msg, []byte("\n")...)
-	_, err := c.conn.Write(append([]byte(fmt.Sprintf("%s|%s|", messageType, destinationID)), inputMsg...))
+func (c *Client) sendWithType(messageType string, destinationID string, msg []byte) error {
+	input := append(msg, []byte("\n")...)
+	_, err := c.conn.Write(append([]byte(fmt.Sprintf("%s|%s|", messageType, destinationID)), input...))
 	return err
 }
 
 func (c *Client) HandleMessages(clientOutputChan chan<- string) error {
 	for {
 		c.conn.SetReadDeadline(time.Now().Add(time.Millisecond * 200))
-		message, _ := c.reader.ReadString('\n')
+		msg, _ := c.reader.ReadString('\n')
 
-		if strings.HasPrefix(message, "whoami:") {
-			s := strings.Split(message, ":")
-			c.Id = s[1]
-			continue
+		if strings.HasPrefix(msg, "whoami:") {
+			split := strings.Split(msg, ":")
+			c.Id = split[1]
 		}
 
-		if message != "" {
-			clientOutputChan <- strings.Trim(message, "\n")
+		if msg != "" {
+			clientOutputChan <- strings.Trim(msg, "\n")
 		}
 	}
 }

@@ -11,40 +11,58 @@ import (
 )
 
 func main() {
-	address := "127.0.0.1:1234"
+	svr := "127.0.0.1:1234"
 
-	client := client.NewClient()
-	err := client.Connect(address)
+	c := client.NewClient()
+	err := c.Connect(svr)
 	if err != nil {
 		panic(err)
 	}
-	defer client.Close()
+	defer c.Close()
 
-	clientOutChan := make(chan string)
-	go client.HandleMessages(clientOutChan)
+	clientOutputChan := make(chan string)
+	go c.HandleMessages(clientOutputChan)
 
-	client.WhoAmI()
+	c.WhoAmI()
 
 	go func() {
 		for {
-			reader := bufio.NewReader(os.Stdin)
-			text, _ := reader.ReadString('\n')
-			texts := strings.Split(text, "|")
-			client.SendMessage(texts[0], []byte(texts[1]))
+			r := bufio.NewReader(os.Stdin)
+			txt, _ := r.ReadString('\n')
 
-			fmt.Printf("%v@%s> ", client.Id, address)
+			if txt == "list\n" {
+				err := c.List()
+				if err != nil {
+					panic(err)
+				}
+			}
+
+			if txt == "whoami\n" {
+				err := c.WhoAmI()
+				if err != nil {
+					panic(err)
+				}
+			}
+
+			spl := strings.Split(txt, "|")
+
+			if len(spl) > 1 {
+				c.Send(spl[0], []byte(spl[1]))
+			}
+
+			fmt.Printf("%v@%s> ", c.Id, svr)
 
 			time.Sleep(time.Millisecond * 300)
 		}
 	}()
 
 	for {
-		if client.Id == "" {
+		if c.Id == "" {
 			continue
 		}
 
-		fmt.Printf("%v@%s> ", client.Id, address)
-		msg := <-clientOutChan
+		fmt.Printf("%v@%s> ", c.Id, svr)
+		msg := <-clientOutputChan
 		fmt.Println(msg)
 
 		time.Sleep(time.Millisecond * 300)

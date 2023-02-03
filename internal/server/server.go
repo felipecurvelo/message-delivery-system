@@ -109,22 +109,21 @@ func (s *Server) HandleMessages() {
 		r := strings.Split(request, "|")
 
 		switch r[0] {
-		case "identity":
+		case "whoami":
 			outputMsg := fmt.Sprintf("whoami:%s", strconv.Itoa(sourceID))
 			_, err = s.connections[sourceID].Write([]byte(outputMsg))
 			break
 		case "list":
-			keys := []string{}
+			ks := []string{}
 			for k := range s.connections {
-				if k != sourceID {
-					keys = append(keys, strconv.Itoa(k))
-				}
+				ks = append(ks, strconv.Itoa(k))
 			}
-			sort.Strings(keys)
-			outputMsg := strings.Join(keys, ",")
-			_, err = s.connections[sourceID].Write([]byte(outputMsg))
+			sort.Strings(ks)
+
+			keys := strings.Join(ks, ",")
+			_, err = s.connections[sourceID].Write([]byte(fmt.Sprintf("list:[%s]", keys)))
 			break
-		case "relay":
+		case "send":
 			destinationIDs := strings.Split(r[1], ",")
 			for _, id := range destinationIDs {
 				destinationID, err := strconv.Atoi(id)

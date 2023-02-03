@@ -37,10 +37,10 @@ func TestIntegrationIdentity(t *testing.T) {
 	assert.NoError(t, err)
 
 	client1ID := <-client1OutChan
-	assert.Equal(t, "1", client1ID)
+	assert.Equal(t, "whoami:1", client1ID)
 
 	client2ID := <-client2OutChan
-	assert.Equal(t, "2", client2ID)
+	assert.Equal(t, "whoami:2", client2ID)
 }
 
 func TestIntegrationList(t *testing.T) {
@@ -76,10 +76,10 @@ func TestIntegrationList(t *testing.T) {
 	assert.NoError(t, err)
 
 	client1ID := <-client1OutChan
-	assert.Equal(t, "2,3", client1ID)
+	assert.Equal(t, "list:[1,2,3]", client1ID)
 
 	client2ID := <-client2OutChan
-	assert.Equal(t, "1,3", client2ID)
+	assert.Equal(t, "list:[1,2,3]", client2ID)
 }
 
 func TestIntegrationSingleDestination(t *testing.T) {
@@ -104,10 +104,10 @@ func TestIntegrationSingleDestination(t *testing.T) {
 	go client2.HandleMessages(client2OutChan)
 
 	//Send a first msg
-	err = client1.SendMessage("2", []byte("firstMsgToClient2"))
+	err = client1.Send("2", []byte("firstMsgToClient2"))
 	assert.NoError(t, err)
 
-	err = client2.SendMessage("1", []byte("firstMsgToClient1"))
+	err = client2.Send("1", []byte("firstMsgToClient1"))
 	assert.NoError(t, err)
 
 	firstMsgToClient2 := <-client2OutChan
@@ -117,10 +117,10 @@ func TestIntegrationSingleDestination(t *testing.T) {
 	assert.Equal(t, "from:2 to:1 msg:firstMsgToClient1", firstMsgToClient1)
 
 	// Send a second msg
-	err = client1.SendMessage("2", []byte("secondMsgToClient2"))
+	err = client1.Send("2", []byte("secondMsgToClient2"))
 	assert.NoError(t, err)
 
-	err = client2.SendMessage("1", []byte("secondMsgToClient1"))
+	err = client2.Send("1", []byte("secondMsgToClient1"))
 	assert.NoError(t, err)
 
 	secondMsgToClient2 := <-client2OutChan
@@ -160,7 +160,7 @@ func TestIntegrationMultipleDestination(t *testing.T) {
 	go client3.HandleMessages(client3OutChan)
 
 	//Send a first msg
-	err = client1.SendMessage("2,3", []byte("msg"))
+	err = client1.Send("2,3", []byte("msg"))
 	assert.NoError(t, err)
 
 	msgToClient2 := <-client2OutChan
@@ -200,7 +200,7 @@ func TestIntegrationMultipleDestinationRaceCondition(t *testing.T) {
 	go client3.HandleMessages(client3OutChan)
 
 	//Send a first msg
-	err = client1.SendMessage("2,3", []byte("msg"))
+	err = client1.Send("2,3", []byte("msg"))
 	assert.NoError(t, err)
 
 	msgToClient2 := <-client2OutChan
@@ -210,7 +210,7 @@ func TestIntegrationMultipleDestinationRaceCondition(t *testing.T) {
 	assert.Equal(t, "from:1 to:3 msg:msg", msgToClient3)
 
 	//Send a second msg
-	err = client1.SendMessage("2,3", []byte("msg"))
+	err = client1.Send("2,3", []byte("msg"))
 	assert.NoError(t, err)
 
 	secondMsgToClient2 := <-client2OutChan
@@ -220,7 +220,7 @@ func TestIntegrationMultipleDestinationRaceCondition(t *testing.T) {
 	assert.Equal(t, "from:1 to:3 msg:msg", secondMsgToClient3)
 
 	//Send a third msg
-	err = client2.SendMessage("1,3", []byte("msg"))
+	err = client2.Send("1,3", []byte("msg"))
 	assert.NoError(t, err)
 
 	thirdMsgToClient1 := <-client1OutChan
